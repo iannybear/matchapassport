@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matcha Passport</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Work+Sans:wght@400;500;600&display=swap');
+
+:root{
+  --ink:#20281a;
+  --ceremonial:#33492d;
+  --ceremonial-dark:#232f1f;
+  --usucha:#9fb87e;
+  --usucha-pale:#cddcb2;
+  --washi:#efe7d3;
+  --washi-dark:#e2d7bb;
+  --hanko:#a8433a;
+  --kinako:#c69456;
+  --gold:#b8923f;
+  --mid:#c69456;
+  --never:#a8433a;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{background:var(--ceremonial);font-family:'Work Sans', sans-serif;color:var(--ink);min-height:100vh;}
+.passport{max-width:760px;margin:0 auto;background:var(--washi);min-height:100vh;position:relative;box-shadow:0 0 60px rgba(0,0,0,0.35);}
+.cover{background:var(--ceremonial);color:var(--washi);padding:30px 26px 22px;border-bottom:6px double var(--gold);position:relative;}
+.cover::before{content:"";position:absolute;inset:8px;border:1px solid rgba(239,231,211,0.25);pointer-events:none;}
+.eyebrow{font-family:'IBM Plex Mono', monospace;font-size:11px;letter-spacing:0.28em;text-transform:uppercase;color:var(--usucha-pale);margin-bottom:6px;}
+.cover h1{font-family:'Zilla Slab', serif;font-weight:700;font-size:32px;margin:0 0 4px;}
+.cover .holder{font-family:'IBM Plex Mono', monospace;font-size:12px;color:var(--usucha-pale);margin-bottom:18px;}
+.cover-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.cstat{background:rgba(239,231,211,0.08);border:1px solid rgba(239,231,211,0.2);border-radius:2px;padding:9px 6px;text-align:center;}
+.cstat .num{font-family:'Zilla Slab', serif;font-weight:700;font-size:19px;color:var(--gold);display:block;line-height:1.1;}
+.cstat .lbl{font-family:'IBM Plex Mono', monospace;font-size:9px;letter-spacing:0.05em;text-transform:uppercase;color:var(--usucha-pale);display:block;margin-top:4px;}
+
+.tabs{display:flex;background:var(--ceremonial-dark);border-bottom:3px solid var(--gold);position:sticky;top:0;z-index:5;}
+.tab{flex:1;text-align:center;padding:12px 4px;font-family:'IBM Plex Mono', monospace;font-size:10.5px;letter-spacing:0.04em;text-transform:uppercase;color:var(--usucha-pale);cursor:pointer;border-right:1px solid rgba(239,231,211,0.12);user-select:none;}
+.tab:last-child{border-right:none;}
+.tab.active{background:var(--washi);color:var(--ceremonial-dark);font-weight:600;}
+
+.page{padding:22px 22px 90px;display:none;}
+.page.active{display:block;}
+h2.section-title{font-family:'Zilla Slab', serif;font-size:20px;font-weight:700;color:var(--ceremonial);margin:0 0 4px;}
+.section-sub{font-size:12.5px;color:#5a5e4d;margin:0 0 16px;}
+
+.empty-state{border:2px dashed var(--washi-dark);border-radius:8px;padding:36px 20px;text-align:center;color:#8a8e78;font-size:13px;}
+
+.filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.filter-btn{font-family:'IBM Plex Mono', monospace;font-size:10.5px;padding:5px 11px;border:1px solid var(--ceremonial);border-radius:14px;background:transparent;color:var(--ceremonial);cursor:pointer;}
+.filter-btn.active{background:var(--ceremonial);color:var(--washi);}
+
+.stamp-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.stamp-card{border:2px dashed var(--ceremonial);border-radius:10px;padding:12px;background:#fff;position:relative;transform:rotate(-1deg);transition:transform .15s;}
+.stamp-card:nth-child(even){transform:rotate(1deg);}
+.stamp-card:hover{transform:rotate(0);}
+.stamp-card.tier-mid{border-color:var(--mid);}
+.stamp-card.tier-never{border-color:var(--never);}
+.sc-top{display:flex;justify-content:space-between;align-items:flex-start;font-family:'IBM Plex Mono', monospace;font-size:9px;text-transform:uppercase;color:#8a8e78;}
+.sc-seal{font-size:8.5px;font-weight:600;padding:1px 6px;border-radius:8px;border:1px solid currentColor;}
+.tier-worth .sc-seal{color:var(--ceremonial);}
+.tier-mid .sc-seal{color:var(--mid);}
+.tier-never .sc-seal{color:var(--never);}
+.sc-brand{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:#6b6f5c;margin-top:8px;}
+.sc-drink{font-family:'Zilla Slab', serif;font-weight:600;font-size:14px;margin-top:1px;}
+.sc-amt{font-family:'IBM Plex Mono', monospace;font-size:13px;color:var(--ceremonial);margin-top:4px;}
+.sc-meta{font-size:10px;color:#8a8e78;margin-top:6px;font-family:'IBM Plex Mono', monospace;}
+.sc-del{position:absolute;top:6px;right:8px;background:none;border:none;color:#c8c2a8;font-size:14px;cursor:pointer;}
+.sc-del:hover{color:var(--hanko);}
+
+.surprise-card{display:flex;align-items:center;gap:14px;background:#fff;border:1px solid var(--washi-dark);border-left:4px solid var(--gold);border-radius:3px;padding:12px 14px;margin-bottom:10px;}
+.surprise-rank{font-family:'Zilla Slab', serif;font-size:22px;font-weight:700;color:var(--usucha);width:30px;text-align:center;flex-shrink:0;}
+.surprise-body{flex:1;}
+.surprise-body .name{font-weight:600;font-size:14px;}
+.surprise-body .meta{font-family:'IBM Plex Mono', monospace;font-size:10.5px;color:#6b6f5c;margin-top:2px;}
+.surprise-index{font-family:'IBM Plex Mono', monospace;text-align:right;flex-shrink:0;}
+.surprise-index .val{font-size:16px;font-weight:600;color:var(--hanko);}
+.surprise-index .cap{font-size:8.5px;text-transform:uppercase;letter-spacing:.04em;color:#8a8e78;display:block;}
+
+.badge-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+.badge{background:#fff;border:1px solid var(--washi-dark);border-radius:4px;padding:14px;text-align:center;}
+.badge.locked{opacity:.4;filter:grayscale(1);}
+.badge .medal{width:38px;height:38px;margin:0 auto 6px;border-radius:50%;background:radial-gradient(circle at 35% 30%, var(--gold), var(--hanko));display:flex;align-items:center;justify-content:center;color:var(--washi);font-family:'Zilla Slab', serif;font-weight:700;font-size:16px;}
+.badge .bname{font-weight:600;font-size:12.5px;margin-bottom:3px;}
+.badge .bdesc{font-size:11px;color:#6b6f5c;line-height:1.35;}
+.badge .bproof{font-family:'IBM Plex Mono', monospace;font-size:9.5px;color:var(--ceremonial);margin-top:7px;border-top:1px dashed var(--washi-dark);padding-top:5px;}
+
+.persona-banner{background:var(--ceremonial);color:var(--washi);padding:18px;border-radius:8px;margin-bottom:14px;}
+.persona-banner .tag{font-family:'IBM Plex Mono', monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--usucha-pale);}
+.persona-banner h3{font-family:'Zilla Slab', serif;margin:4px 0;font-size:20px;}
+.persona-banner p{font-size:12.5px;color:var(--usucha-pale);margin:0;line-height:1.4;}
+
+.splitbar{height:14px;border-radius:7px;overflow:hidden;display:flex;background:var(--washi-dark);margin:8px 0;}
+.splitbar div{height:100%;}
+.split-legend{display:flex;justify-content:space-between;font-size:10.5px;font-family:'IBM Plex Mono', monospace;color:#6b6f5c;}
+
+.insight-card{background:#fff;border:1px solid var(--washi-dark);border-radius:6px;padding:14px;margin-bottom:12px;}
+.insight-card h4{margin:0 0 8px;font-size:12.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ceremonial);}
+.breakdown-row{display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid var(--washi);}
+.breakdown-row:last-child{border-bottom:none;}
+.breakdown-row .k{color:#4a4e3d;}
+.breakdown-row .v{font-family:'IBM Plex Mono', monospace;color:var(--ceremonial);}
+
+.clear-btn{display:block;margin:18px auto 0;font-family:'IBM Plex Mono', monospace;font-size:11px;color:var(--hanko);background:none;border:1px solid var(--hanko);border-radius:14px;padding:6px 14px;cursor:pointer;}
+
+.fab{position:fixed;bottom:22px;right:calc(50% - 380px + 22px);background:var(--hanko);color:var(--washi);width:52px;height:52px;border-radius:50%;border:none;font-size:26px;box-shadow:0 3px 10px rgba(0,0,0,.35);cursor:pointer;z-index:20;}
+@media (max-width:800px){ .fab{right:22px;} }
+
+.modal-bg{position:fixed;inset:0;background:rgba(32,40,26,0.55);display:none;align-items:flex-end;justify-content:center;z-index:30;padding:10px;}
+.modal-bg.show{display:flex;}
+.modal{background:var(--washi);width:100%;max-width:480px;border-radius:12px 12px 0 0;padding:20px;max-height:92vh;overflow-y:auto;}
+.modal h3{font-family:'Zilla Slab', serif;margin:0 0 12px;color:var(--ceremonial);display:flex;justify-content:space-between;align-items:center;}
+.modal h3 button{background:none;border:none;font-size:20px;color:#8a8e78;cursor:pointer;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.field{margin-bottom:8px;}
+.field label{display:block;font-family:'IBM Plex Mono', monospace;font-size:9.5px;text-transform:uppercase;color:#6b6f5c;margin-bottom:3px;}
+.field input, .field select{width:100%;border:1px solid var(--washi-dark);border-radius:5px;padding:8px;font-size:13px;font-family:'Work Sans',sans-serif;background:#fff;}
+.submit-btn{width:100%;background:var(--ceremonial);color:var(--washi);border:none;border-radius:6px;padding:11px;font-weight:600;font-size:13.5px;cursor:pointer;margin-top:6px;}
+.footer-note{text-align:center;font-family:'IBM Plex Mono', monospace;font-size:10px;color:#8a8e78;padding:16px 0 6px;}
+</style>
+</head>
+<body>
+
+<div class="passport">
+  <div class="cover">
+    <div class="eyebrow">Republic of Matcha &middot; Personal Ledger</div>
+    <h1>Matcha Passport</h1>
+    <div class="holder" id="holderLine">HOLDER: YOU &nbsp;&bull;&nbsp; No. 0000</div>
+    <div class="cover-stats" id="coverStats"></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="log">Passport</div>
+    <div class="tab" data-tab="surprises">Surprises</div>
+    <div class="tab" data-tab="badges">Badges</div>
+    <div class="tab" data-tab="insights">Insights</div>
+  </div>
+
+  <div class="page active" id="page-log">
+    <h2 class="section-title">Stamp Book</h2>
+    <p class="section-sub">Tap + to log a cup. Everything below is yours, saved automatically.</p>
+    <div class="filter-bar" id="filterBar"></div>
+    <div id="stampGrid"></div>
+  </div>
+
+  <div class="page" id="page-surprises">
+    <h2 class="section-title">Punching Above Its Bracket</h2>
+    <p class="section-sub">Each drink is compared only to others in its own price bracket &mdash; the real surprises, not just the priciest cups.</p>
+    <div id="surpriseList"></div>
+  </div>
+
+  <div class="page" id="page-badges">
+    <h2 class="section-title">Earned Medals</h2>
+    <p class="section-sub">Computed straight from whatever you've logged so far.</p>
+    <div class="badge-grid" id="badgeGrid"></div>
+  </div>
+
+  <div class="page" id="page-insights">
+    <h2 class="section-title">Insights</h2>
+    <p class="section-sub">Your matcha archetype and spending patterns.</p>
+    <div id="insightsBody"></div>
+    <button class="clear-btn" id="clearBtn">Clear all saved stamps</button>
+  </div>
+
+  <button class="fab" id="fabBtn">+</button>
+  <div class="footer-note">MATCHA PASSPORT &middot; SAVED AUTOMATICALLY TO THIS ARTIFACT</div>
+</div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3>Log a stamp <button id="modalClose">&times;</button></h3>
+    <div class="field-row">
+      <div class="field"><label>Brand / Cafe</label><input id="f-brand" placeholder="e.g. Yardstick"></div>
+      <div class="field"><label>Drink</label><input id="f-drink" placeholder="e.g. Oat Matcha Latte"></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Base</label>
+        <select id="f-base"><option>Matcha</option><option>Hojicha</option></select>
+      </div>
+      <div class="field"><label>Milk</label>
+        <select id="f-milk"><option>Dairy</option><option>Oat</option><option>Coconut</option><option>None</option></select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Store Type</label>
+        <select id="f-store"><option>Cafe</option><option>Kiosk</option><option>Matcha Slow Bar</option><option>Big Brand</option><option>Restaurant</option></select>
+      </div>
+      <div class="field"><label>Amount (₱)</label><input id="f-amount" type="number" min="0" placeholder="180"></div>
+    </div>
+    <div class="field"><label>Location</label><input id="f-location" placeholder="e.g. Ateneo/Katipunan"></div>
+    <div class="field-row">
+      <div class="field"><label>Rating (1&ndash;5)</label>
+        <select id="f-rating"><option>5</option><option>4.5</option><option>4</option><option>3.5</option><option>3</option><option>2.5</option><option>2</option><option>1.5</option><option>1</option></select>
+      </div>
+      <div class="field"><label>Worth it?</label>
+        <select id="f-tier"><option value="worth">🟢 Worth it</option><option value="mid">🟡 Mid</option><option value="never">🔴 Never again</option></select>
+      </div>
+    </div>
+    <button class="submit-btn" id="f-submit">Stamp it</button>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'matcha_entries';
+let entries = [];
+
+async function loadEntries(){
+  try{
+    const res = await window.storage.get(STORAGE_KEY, false);
+    entries = res && res.value ? JSON.parse(res.value) : [];
+  }catch(e){
+    entries = [];
+  }
+  renderAll();
+}
+
+async function saveEntries(){
+  try{
+    await window.storage.set(STORAGE_KEY, JSON.stringify(entries), false);
+  }catch(e){
+    console.error('Save failed', e);
+  }
+}
+
+function tierColorClass(t){
+  if(t==='mid') return 'tier-mid';
+  if(t==='never') return 'tier-never';
+  return 'tier-worth';
+}
+function tierLabel(t){
+  if(t==='mid') return '🟡 MID';
+  if(t==='never') return '🔴 NEVER AGAIN';
+  return '🟢 WORTH IT';
+}
+
+// ---- BRACKETS ----
+function computeBrackets(){
+  const nonZero = entries.filter(e=>e.amount>0).map(e=>e.amount).sort((a,b)=>a-b);
+  function quantile(arr,q){
+    if(arr.length===0) return 0;
+    const pos=(arr.length-1)*q, base=Math.floor(pos), rest=pos-base;
+    return arr[base+1]!==undefined ? arr[base]+rest*(arr[base+1]-arr[base]) : arr[base];
+  }
+  const q1=quantile(nonZero,1/3), q2=quantile(nonZero,2/3);
+  function bracketOf(e){
+    if(e.amount===0) return "Free";
+    if(e.amount<=q1) return "Budget";
+    if(e.amount<=q2) return "Mid";
+    return "Premium";
+  }
+  entries.forEach(e=>e.bracket=bracketOf(e));
+  const avg={};
+  ["Free","Budget","Mid","Premium"].forEach(b=>{
+    const items=entries.filter(e=>e.bracket===b);
+    avg[b]= items.length ? items.reduce((s,e)=>s+e.rating,0)/items.length : null;
+  });
+  entries.forEach(e=>{ e.index = avg[e.bracket]!==null ? +(e.rating-avg[e.bracket]).toFixed(2) : 0; });
+}
+
+function renderCover(){
+  const total = entries.length;
+  const spent = entries.reduce((s,e)=>s+e.amount,0);
+  const avgR = total ? (entries.reduce((s,e)=>s+e.rating,0)/total) : 0;
+  const brands = new Set(entries.map(e=>e.brand)).size;
+  document.getElementById('holderLine').innerHTML = `HOLDER: YOU &nbsp;&bull;&nbsp; No. ${String(total).padStart(4,'0')}`;
+  document.getElementById('coverStats').innerHTML = `
+    <div class="cstat"><span class="num">${total}</span><span class="lbl">Cups</span></div>
+    <div class="cstat"><span class="num">&#8369;${spent.toLocaleString()}</span><span class="lbl">Spent</span></div>
+    <div class="cstat"><span class="num">${total? avgR.toFixed(1):'—'}</span><span class="lbl">Avg Rating</span></div>
+    <div class="cstat"><span class="num">${brands}</span><span class="lbl">Brands</span></div>
+  `;
+}
+
+let activeFilter = "All";
+function renderFilterBar(){
+  const storeTypes = ["All", ...new Set(entries.map(e=>e.storeType))];
+  document.getElementById('filterBar').innerHTML = storeTypes.map(t=>`
+    <button class="filter-btn ${t===activeFilter?'active':''}" data-f="${t}">${t}</button>
+  `).join('');
+  document.querySelectorAll('.filter-btn').forEach(b=>{
+    b.onclick = ()=>{ activeFilter=b.dataset.f; renderFilterBar(); renderStampGrid(); };
+  });
+}
+
+function renderStampGrid(){
+  const grid = document.getElementById('stampGrid');
+  const sorted = [...entries].sort((a,b)=>b.ts-a.ts);
+  const filtered = activeFilter==="All" ? sorted : sorted.filter(e=>e.storeType===activeFilter);
+  if(entries.length===0){
+    grid.innerHTML = `<div class="empty-state">Your passport is empty.<br>Tap the + button to log your first cup.</div>`;
+    return;
+  }
+  if(filtered.length===0){
+    grid.innerHTML = `<div class="empty-state">No stamps match that filter yet.</div>`;
+    return;
+  }
+  grid.innerHTML = `<div class="stamp-grid">${filtered.map(e=>`
+    <div class="stamp-card ${tierColorClass(e.tier)}">
+      <button class="sc-del" data-id="${e.id}">&times;</button>
+      <div class="sc-top"><span>${e.date}</span><span class="sc-seal">${tierLabel(e.tier)}</span></div>
+      <div class="sc-brand">${e.brand}${e.type==='Hojicha'?' · Hojicha':''}</div>
+      <div class="sc-drink">${e.drink}</div>
+      <div class="sc-amt">${e.amount===0?'Free':'&#8369;'+e.amount}</div>
+      <div class="sc-meta">${e.storeType} · ${e.location} · ${e.milk}</div>
+    </div>
+  `).join('')}</div>`;
+  document.querySelectorAll('.sc-del').forEach(btn=>{
+    btn.onclick = ()=>{
+      entries = entries.filter(e=>e.id!==Number(btn.dataset.id));
+      saveEntries(); renderAll();
+    };
+  });
+}
+
+function renderSurprises(){
+  const el = document.getElementById('surpriseList');
+  const pool = entries.filter(e=>e.bracket!=="Free");
+  if(entries.length < 6){
+    el.innerHTML = `<div class="empty-state">Log at least 6 cups across a few different price points to unlock your Worth-It surprises.</div>`;
+    return;
+  }
+  const top = [...pool].sort((a,b)=>b.index-a.index).slice(0,6);
+  el.innerHTML = top.map((e,i)=>`
+    <div class="surprise-card">
+      <div class="surprise-rank">${i+1}</div>
+      <div class="surprise-body">
+        <div class="name">${e.brand} &mdash; ${e.drink}</div>
+        <div class="meta">${e.bracket} bracket &middot; &#8369;${e.amount} &middot; rated ${e.rating} &middot; ${e.location}</div>
+      </div>
+      <div class="surprise-index"><span class="val">${e.index>=0?'+':''}${e.index}</span><span class="cap">vs bracket avg</span></div>
+    </div>
+  `).join('');
+}
+
+function renderBadges(){
+  const el = document.getElementById('badgeGrid');
+  if(entries.length===0){
+    el.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">No badges yet &mdash; start logging to earn your first medal.</div>`;
+    return;
+  }
+  const brandCounts={}, brandSpend={};
+  entries.forEach(e=>{ brandCounts[e.brand]=(brandCounts[e.brand]||0)+1; brandSpend[e.brand]=(brandSpend[e.brand]||0)+e.amount; });
+  const maxVisits = Math.max(...Object.values(brandCounts));
+  const loyalistCandidates = Object.keys(brandCounts).filter(b=>brandCounts[b]===maxVisits);
+  const loyalistBrand = loyalistCandidates.sort((a,b)=>brandSpend[b]-brandSpend[a])[0];
+  const bigSpenderBrand = Object.keys(brandSpend).sort((a,b)=>brandSpend[b]-brandSpend[a])[0];
+  const nonZero = entries.filter(e=>e.amount>0).map(e=>e.amount).sort((a,b)=>a-b);
+  const q1 = nonZero.length ? nonZero[Math.floor((nonZero.length-1)/3)] : 0;
+  const valueHunterHits = entries.filter(e=>e.amount>0 && e.amount<=q1 && e.rating>=4);
+  const freebieCount = entries.filter(e=>e.amount===0).length;
+  const hojichaCount = entries.filter(e=>e.type==='Hojicha').length;
+  const bigBrandBrands = new Set(entries.filter(e=>e.storeType==='Big Brand').map(e=>e.brand));
+  const bestSurprise = entries.filter(e=>e.bracket && e.bracket!=='Free').sort((a,b)=>b.index-a.index)[0];
+
+  const badges = [
+    { name:"Punch-Above Champion", icon:"★", desc:"Highest Worth-It Index in the ledger.",
+      proof: bestSurprise ? `${bestSurprise.brand} · +${bestSurprise.index} vs bracket` : '', earned: entries.length>=6 && !!bestSurprise },
+    { name:"Loyalist", icon:"L", desc:"Returned to one brand more than any other.",
+      proof:`${loyalistBrand} · ${maxVisits} visits`, earned: maxVisits>=2 },
+    { name:"Big Spender", icon:"₱", desc:"Highest cumulative spend on one brand.",
+      proof:`${bigSpenderBrand} · &#8369;${brandSpend[bigSpenderBrand].toLocaleString()}`, earned:true },
+    { name:"Value Hunter", icon:"V", desc:"3+ Budget-bracket drinks rated 4 or higher.",
+      proof:`${valueHunterHits.length} qualifying cups`, earned: valueHunterHits.length>=3 },
+    { name:"Freebie Finder", icon:"F", desc:"Logged 8+ drinks that cost nothing.",
+      proof:`${freebieCount} free cups`, earned: freebieCount>=8 },
+    { name:"Hojicha Explorer", icon:"H", desc:"Branched into 4+ hojicha drinks.",
+      proof:`${hojichaCount} hojicha entries`, earned: hojichaCount>=4 },
+    { name:"Big Brand Completionist", icon:"C", desc:"Tried 6+ different major chains.",
+      proof:`${bigBrandBrands.size} unique chains`, earned: bigBrandBrands.size>=6 },
+    { name:"Consistency Streak", icon:"S", desc:"3+ consecutive weeks with a cup logged.",
+      proof:"", earned:false }
+  ];
+  // consistency streak calc
+  function isoWeekKey(d){
+    const date=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+    const day=date.getUTCDay()||7; date.setUTCDate(date.getUTCDate()+4-day);
+    const yearStart=new Date(Date.UTC(date.getUTCFullYear(),0,1));
+    const wk=Math.ceil((((date-yearStart)/86400000)+1)/7);
+    return date.getUTCFullYear()*52+wk;
+  }
+  const weekNums=[...new Set(entries.map(e=>isoWeekKey(new Date(e.ts))))].sort((a,b)=>a-b);
+  let longest=weekNums.length?1:0, cur=1;
+  for(let i=1;i<weekNums.length;i++){ if(weekNums[i]===weekNums[i-1]+1){cur++;longest=Math.max(longest,cur);} else cur=1; }
+  badges[7].proof = `${longest} week${longest===1?'':'s'} in a row`;
+  badges[7].earned = longest>=3;
+
+  el.innerHTML = badges.map(b=>`
+    <div class="badge ${b.earned?'':'locked'}">
+      <div class="medal">${b.icon}</div>
+      <div class="bname">${b.name}</div>
+      <div class="bdesc">${b.desc}</div>
+      <div class="bproof">${b.earned ? b.proof : 'Not yet earned'}</div>
+    </div>
+  `).join('');
+}
+
+function renderInsights(){
+  const el = document.getElementById('insightsBody');
+  if(entries.length===0){
+    el.innerHTML = `<div class="empty-state">Log a few cups to see your archetype and spending patterns.</div>`;
+    return;
+  }
+  const total = entries.length;
+  const spend = entries.reduce((s,e)=>s+e.amount,0);
+  const paid = entries.filter(e=>e.amount>0);
+  const avgCost = paid.length ? spend/paid.length : 0;
+  const worthN = entries.filter(e=>e.tier==='worth').length;
+  const midSpend = entries.filter(e=>e.tier==='mid').reduce((s,e)=>s+e.amount,0);
+  const worthSpend = entries.filter(e=>e.tier==='worth').reduce((s,e)=>s+e.amount,0);
+  const neverSpend = entries.filter(e=>e.tier==='never').reduce((s,e)=>s+e.amount,0);
+  const worthPct = spend? worthSpend/spend*100:0, midPct = spend? midSpend/spend*100:0, neverPct = spend? neverSpend/spend*100:0;
+  const worthRatio = Math.round(worthN/total*100);
+
+  let personaTag='THE BALANCED EXPLORER', personaDesc=`You're actively exploring across ${new Set(entries.map(e=>e.location)).size} locations.`;
+  if(worthRatio>=60){ personaTag='THE VALUE NINJA'; personaDesc=`${worthRatio}% of your cups are tagged "worth it" — you get maximum satisfaction per peso.`; }
+  else if(neverPct>=25){ personaTag='THE HYPE CHASER'; personaDesc=`&#8369;${neverSpend.toLocaleString()} went to "never again" cups — worth being pickier about hyped spots.`; }
+
+  function breakdown(field, values){
+    return values.map(v=>{
+      const rows = entries.filter(e=>e[field]===v);
+      if(!rows.length) return '';
+      const worths = rows.filter(e=>e.tier==='worth').length;
+      const s = rows.reduce((a,c)=>a+c.amount,0);
+      return `<div class="breakdown-row"><span class="k">${v} (${rows.length})</span><span class="v">${worths}/${rows.length} worth it &middot; &#8369;${s}</span></div>`;
+    }).join('');
+  }
+
+  el.innerHTML = `
+    <div class="persona-banner">
+      <span class="tag">Live Archetype</span>
+      <h3>${personaTag}</h3>
+      <p>${personaDesc}</p>
+    </div>
+    <div class="insight-card">
+      <h4>Value vs Regret Split</h4>
+      <div class="splitbar">
+        <div style="width:${worthPct}%;background:var(--ceremonial)"></div>
+        <div style="width:${midPct}%;background:var(--mid)"></div>
+        <div style="width:${neverPct}%;background:var(--hanko)"></div>
+      </div>
+      <div class="split-legend"><span>🟢 &#8369;${worthSpend}</span><span>🟡 &#8369;${midSpend}</span><span>🔴 &#8369;${neverSpend}</span></div>
+    </div>
+    <div class="insight-card">
+      <div class="breakdown-row"><span class="k">Total spent</span><span class="v">&#8369;${spend.toLocaleString()}</span></div>
+      <div class="breakdown-row"><span class="k">Avg paid per cup</span><span class="v">&#8369;${Math.round(avgCost)}</span></div>
+    </div>
+    <div class="insight-card"><h4>Milk preference</h4>${breakdown('milk',['Dairy','Oat','Coconut','None'])}</div>
+    <div class="insight-card"><h4>Store type</h4>${breakdown('storeType',['Cafe','Kiosk','Matcha Slow Bar','Big Brand','Restaurant'])}</div>
+    <div class="insight-card"><h4>Matcha vs Hojicha</h4>${breakdown('type',['Matcha','Hojicha'])}</div>
+  `;
+}
+
+function renderAll(){
+  computeBrackets();
+  renderCover();
+  renderFilterBar();
+  renderStampGrid();
+  renderSurprises();
+  renderBadges();
+  renderInsights();
+}
+
+// ---- TABS ----
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('page-'+tab.dataset.tab).classList.add('active');
+  });
+});
+
+// ---- MODAL ----
+const modalBg = document.getElementById('modalBg');
+document.getElementById('fabBtn').onclick = ()=> modalBg.classList.add('show');
+document.getElementById('modalClose').onclick = ()=> modalBg.classList.remove('show');
+modalBg.onclick = (e)=>{ if(e.target===modalBg) modalBg.classList.remove('show'); };
+
+document.getElementById('f-submit').onclick = ()=>{
+  const brand = document.getElementById('f-brand').value.trim();
+  const drink = document.getElementById('f-drink').value.trim();
+  if(!brand || !drink){ alert('Please add at least a brand and a drink.'); return; }
+  const now = new Date();
+  const entry = {
+    id: Date.now(),
+    ts: now.getTime(),
+    date: now.toLocaleDateString('en-US',{month:'short',day:'numeric'}),
+    brand, drink,
+    type: document.getElementById('f-base').value,
+    milk: document.getElementById('f-milk').value,
+    storeType: document.getElementById('f-store').value,
+    amount: parseFloat(document.getElementById('f-amount').value) || 0,
+    location: document.getElementById('f-location').value.trim() || 'Unspecified',
+    rating: parseFloat(document.getElementById('f-rating').value),
+    tier: document.getElementById('f-tier').value
+  };
+  entries.push(entry);
+  saveEntries();
+  renderAll();
+  modalBg.classList.remove('show');
+  ['f-brand','f-drink','f-amount','f-location'].forEach(id=>document.getElementById(id).value='');
+};
+
+document.getElementById('clearBtn').onclick = ()=>{
+  if(confirm('This clears every stamp in your passport. This cannot be undone. Continue?')){
+    entries = [];
+    saveEntries();
+    renderAll();
+  }
+};
+
+loadEntries();
+</script>
+</body>
+</html>
